@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bastu Hannu 44 - 3D Modell & Visualisering</title>
+  <style>
+    :root {
+      --bg: #0f141c;
+      --panel-bg: rgba(20, 27, 38, 0.85);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent: #e59344;
+      --accent-glow: rgba(229, 147, 68, 0.4);
+      --text: #f0f3f6;
+      --text-muted: #9ba7b5;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    /* Top Title Header */
+    .header-bar {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .header-bar h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-bar h1 span.tag {
+      font-size: 0.7rem;
+      background: var(--accent);
+      color: #111;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .header-bar p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Floating Toolbar */
+    .controls-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 40px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+    .btn.active {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .btn-separator {
+      width: 1px;
+      height: 24px;
+      background: var(--panel-border);
+      margin: 0 4px;
+    }
+
+    /* Info Sidecard */
+    .info-card {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      width: 290px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .info-card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      font-weight: 700;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 6px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .info-item {
+      background: rgba(255,255,255,0.03);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .info-item .label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      display: block;
+    }
+    .info-item .val {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .info-card .tip {
+      font-size: 0.74rem;
+      line-height: 1.35;
+      color: #cbd5e1;
+      background: rgba(229, 147, 68, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .downloads-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .download-btn {
+      background: #252e3d;
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .download-btn:hover {
+      background: #333e52;
+      border-color: var(--accent);
+    }
+
+    /* Hint at bottom */
+    .hint {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+      letter-spacing: 0.5px;
+    }
+  </style>
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <!-- Header -->
+  <div class="header-bar">
+    <h1>Bastu Hannu 44 <span class="tag">Paddelpalatset</span></h1>
+    <p>3D-skiss för placering vid forsstranden • Polhus 44 mm knuttimmer</p>
+  </div>
+
+  <!-- Info Sidecard -->
+  <div class="info-card">
+    <h2>Specifikationer</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="label">Totalmått</span>
+        <span class="val">4.40 x 2.70 m</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Höjd (fram/bak)</span>
+        <span class="val">2.50 / 2.16 m</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Bastuavdelning</span>
+        <span class="val">3.0 x 2.5 m (7.2 m²)</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Veranda / Relax</span>
+        <span class="val">1.2 x 2.5 m (3.0 m²)</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Kapacitet</span>
+        <span class="val">6 – 8 personer</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Panoramafönster</span>
+        <span class="val">3 st 875x1700</span>
+      </div>
+    </div>
+    
+    <div class="tip">
+      <strong>Forsstranden:</strong> De stora glaspartierna vetter direkt mot strömmen. Verandan ger väderskyddad entré och svalkande relax mellan bastupassen!
+    </div>
+
+    <div class="downloads-box">
+      <a class="download-btn" href="hannu_bastu.obj" download="hannu_bastu.obj">
+        <span>📦 Ladda ner 3D-modell (.OBJ)</span>
+        <span>⬇</span>
+      </a>
+      <a class="download-btn" href="hannu_bastu.gltf" download="hannu_bastu.gltf">
+        <span>✨ Ladda ner 3D-scen (.GLTF)</span>
+        <span>⬇</span>
+      </a>
+      <a class="download-btn" href="hannu_planritning.dxf" download="hannu_planritning.dxf">
+        <span>📐 Ladda ner CAD-ritning (.DXF)</span>
+        <span>⬇</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="hint">Rotera med vänsterklick • Panorera med högerklick • Zooma med scroll</div>
+
+  <!-- Bottom Controls -->
+  <div class="controls-panel">
+    <button class="btn active" id="btn-night" onclick="setLightingMode(true)">🌙 Kvällsstämning</button>
+    <button class="btn" id="btn-day" onclick="setLightingMode(false)">☀️ Dagsljus</button>
+    
+    <div class="btn-separator"></div>
+
+    <button class="btn" id="btn-roof" onclick="toggleRoof()">🏠 <span id="roof-text">Dölj tak (Insyn)</span></button>
+    <button class="btn" id="btn-dims" onclick="toggleDimensions()">📏 Mått</button>
+
+    <div class="btn-separator"></div>
+
+    <button class="btn" onclick="setCameraView('front')">Fasad/Fors</button>
+    <button class="btn" onclick="setCameraView('porch')">Veranda</button>
+    <button class="btn" onclick="setCameraView('interior')">Interiör</button>
+    <button class="btn" onclick="setCameraView('plan')">Planvy</button>
+  </div>
+
+  <script>
+    // --- 3D Scene Initialization ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0f141c, 0.025);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(4.5, 3.2, 7.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 + 0.02; // Don't go deep below ground
+    controls.target.set(2.1, 1.3, 1.25);
+
+    // --- Materials Palette ---
+    const mats = {
+      timberExterior: new THREE.MeshStandardMaterial({
+        color: 0x1f2226,
+        roughness: 0.85,
+        metalness: 0.05,
+      }),
+      timberInterior: new THREE.MeshStandardMaterial({
+        color: 0xdeb887,
+        roughness: 0.65,
+        metalness: 0.02,
+      }),
+      woodDeck: new THREE.MeshStandardMaterial({
+        color: 0x6e6557,
+        roughness: 0.8,
+        metalness: 0.05,
+      }),
+      roofFelt: new THREE.MeshStandardMaterial({
+        color: 0x18191c,
+        roughness: 0.9,
+        metalness: 0.1,
+      }),
+      windowFrame: new THREE.MeshStandardMaterial({
+        color: 0x111214,
+        roughness: 0.4,
+        metalness: 0.6,
+      }),
+      glass: new THREE.MeshPhysicalMaterial({
+        color: 0xc8e6f5,
+        transparent: true,
+        opacity: 0.38,
+        roughness: 0.1,
+        transmission: 0.85,
+        thickness: 0.2,
+        reflectivity: 0.9,
+      }),
+      heaterMesh: new THREE.MeshStandardMaterial({
+        color: 0x33363b,
+        roughness: 0.35,
+        metalness: 0.85,
+        wireframe: false,
+      }),
+      saunaStones: new THREE.MeshStandardMaterial({
+        color: 0x2d2c2e,
+        roughness: 0.95,
+        metalness: 0.0,
+      }),
+      concretePlinth: new THREE.MeshStandardMaterial({
+        color: 0x8a929a,
+        roughness: 0.9,
+        metalness: 0.05,
+      }),
+      lanternGlow: new THREE.MeshBasicMaterial({
+        color: 0xffaa44,
+      })
+    };
+
+    // Root Group
+    const saunaGroup = new THREE.Group();
+    scene.add(saunaGroup);
+
+    const roofGroup = new THREE.Group();
+    saunaGroup.add(roofGroup);
+
+    const dimsGroup = new THREE.Group();
+    dimsGroup.visible = false;
+    saunaGroup.add(dimsGroup);
+
+    // Geometry Helpers
+    function createBox(w, h, d, mat, x, y, z, shadow=true) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x + w/2, y + h/2, z + d/2);
+      mesh.castShadow = shadow;
+      mesh.receiveShadow = shadow;
+      return mesh;
+    }
+
+    const Y_BASE = 0.20;
+    const Y_FLOOR = Y_BASE + 0.12;
+    const WALL_T = 0.044;
+
+    function wallHeight(z) {
+      const slope = (2.04 - 2.38) / 2.50;
+      return Y_FLOOR + 2.38 + slope * z;
+    }
+
+    // 1. Foundation & Plinths
+    const plinthsX = [0.1, 0.75, 1.45, 2.15, 2.85, 3.55, 4.2];
+    const plinthsZ = [0.15, 1.35, 2.45];
+    plinthsX.forEach(px => {
+      plinthsZ.forEach(pz => {
+        const p = createBox(0.2, Y_BASE, 0.2, mats.concretePlinth, px - 0.1, 0, pz - 0.1);
+        saunaGroup.add(p);
+      });
+    });
+
+    // Subfloor Joists
+    plinthsZ.forEach(pz => {
+      saunaGroup.add(createBox(4.35, 0.09, 0.09, mats.woodDeck, -0.05, Y_BASE, pz - 0.045));
+    });
+
+    // 2. Floors
+    // Sauna floor
+    saunaGroup.add(createBox(2.95, 0.03, 2.42, mats.timberInterior, 0.02, Y_FLOOR - 0.03, 0.04));
+    // Porch floor (individual decking boards with slight gaps)
+    for (let pz = 0.06; pz < 2.44; pz += 0.135) {
+      saunaGroup.add(createBox(1.24, 0.028, 0.125, mats.woodDeck, 3.01, Y_FLOOR - 0.028, pz));
+    }
+
+    // 3. Walls
+    // Rear wall (spans entire 4.35m width!)
+    const rearWallH = wallHeight(2.50) - Y_FLOOR;
+    saunaGroup.add(createBox(4.35, rearWallH, WALL_T, mats.timberExterior, -0.05, Y_FLOOR, 2.50 - WALL_T));
+    // Rear wall interior cladding
+    saunaGroup.add(createBox(2.95, rearWallH - 0.05, 0.015, mats.timberInterior, 0.02, Y_FLOOR, 2.50 - WALL_T - 0.015));
+
+    // Left outer wall (sloping)
+    const steps = 12;
+    const dz = 2.50 / steps;
+    for (let s = 0; s < steps; s++) {
+      const z0 = s * dz;
+      const z1 = (s + 1) * dz;
+      const h = wallHeight((z0 + z1)/2) - Y_FLOOR;
+      saunaGroup.add(createBox(WALL_T, h, dz, mats.timberExterior, -WALL_T, Y_FLOOR, z0));
+      // Interior lining
+      saunaGroup.add(createBox(0.015, h - 0.05, dz, mats.timberInterior, 0.0, Y_FLOOR, z0));
+      // Corner knot horns
+      if (s === 0) saunaGroup.add(createBox(WALL_T + 0.12, h, 0.1, mats.timberExterior, -WALL_T - 0.08, Y_FLOOR, -0.06));
+      if (s === steps - 1) saunaGroup.add(createBox(WALL_T + 0.12, h, 0.1, mats.timberExterior, -WALL_T - 0.08, Y_FLOOR, 2.45));
+    }
+
+    // Partition Wall (between Sauna and Porch at X=3.00)
+    // Wall above door
+    const divH = wallHeight(0.5) - Y_FLOOR;
+    saunaGroup.add(createBox(WALL_T, divH - 1.95, 1.10, mats.timberExterior, 3.00, Y_FLOOR + 1.95, 0.0));
+    // Wall rear section (Z=1.10 to 2.50)
+    for (let s = 0; s < 6; s++) {
+      const z0 = 1.10 + s * (1.40 / 6);
+      const z1 = 1.10 + (s + 1) * (1.40 / 6);
+      const h = wallHeight((z0 + z1)/2) - Y_FLOOR;
+      saunaGroup.add(createBox(WALL_T, h, (1.40/6), mats.timberExterior, 3.00, Y_FLOOR, z0));
+      saunaGroup.add(createBox(0.015, h - 0.05, (1.40/6), mats.timberInterior, 2.985, Y_FLOOR, z0));
+    }
+
+    // Front Wall (with 3 Panorama Glass Openings)
+    // Bottom log under windows
+    saunaGroup.add(createBox(3.05, 0.40, WALL_T, mats.timberExterior, -0.02, Y_FLOOR, 0.0));
+    // Top header log above windows
+    const frontTopH = (wallHeight(0.0) - Y_FLOOR) - 2.15;
+    saunaGroup.add(createBox(3.05, frontTopH, WALL_T, mats.timberExterior, -0.02, Y_FLOOR + 2.15, 0.0));
+    // Side posts
+    saunaGroup.add(createBox(0.14, 1.75, WALL_T, mats.timberExterior, -0.02, Y_FLOOR + 0.40, 0.0));
+    saunaGroup.add(createBox(0.14, 1.75, WALL_T, mats.timberExterior, 2.89, Y_FLOOR + 0.40, 0.0));
+
+    // 4. Three Large Panorama Windows (3 x 875x1700 mm)
+    const winW = 0.88;
+    for (let i = 0; i < 3; i++) {
+      const wx = 0.14 + i * (winW + 0.04);
+      // Outer Frame
+      const fw = 0.04;
+      saunaGroup.add(createBox(winW, fw, 0.06, mats.windowFrame, wx, Y_FLOOR + 0.40, 0.0));
+      saunaGroup.add(createBox(winW, fw, 0.06, mats.windowFrame, wx, Y_FLOOR + 2.15 - fw, 0.0));
+      saunaGroup.add(createBox(fw, 1.75, 0.06, mats.windowFrame, wx, Y_FLOOR + 0.40, 0.0));
+      saunaGroup.add(createBox(fw, 1.75, 0.06, mats.windowFrame, wx + winW - fw, Y_FLOOR + 0.40, 0.0));
+      // Glass Pane
+      saunaGroup.add(createBox(winW - 2*fw, 1.75 - 2*fw, 0.015, mats.glass, wx + fw, Y_FLOOR + 0.40 + fw, 0.02, false));
+    }
+
+    // 5. Entrance Door (on partition wall facing terrace)
+    // Frame
+    saunaGroup.add(createBox(0.05, 1.95, 0.05, mats.windowFrame, 3.00, Y_FLOOR, 0.15));
+    saunaGroup.add(createBox(0.05, 1.95, 0.05, mats.windowFrame, 3.00, Y_FLOOR, 1.05));
+    saunaGroup.add(createBox(0.05, 0.05, 0.95, mats.windowFrame, 3.00, Y_FLOOR + 1.90, 0.15));
+    // Door Leaf
+    saunaGroup.add(createBox(0.038, 1.88, 0.86, mats.timberExterior, 3.005, Y_FLOOR + 0.02, 0.19));
+    
+    // Round Porthole Window (skeppsventil)
+    const portholeGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 24);
+    portholeGeo.rotateZ(Math.PI / 2);
+    const portholeFrame = new THREE.Mesh(portholeGeo, mats.windowFrame);
+    portholeFrame.position.set(3.024, Y_FLOOR + 1.35, 0.62);
+    saunaGroup.add(portholeFrame);
+
+    const portholeGlassGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.065, 24);
+    portholeGlassGeo.rotateZ(Math.PI / 2);
+    const portholeGlass = new THREE.Mesh(portholeGlassGeo, mats.glass);
+    portholeGlass.position.set(3.024, Y_FLOOR + 1.35, 0.62);
+    saunaGroup.add(portholeGlass);
+
+    // Door handle
+    saunaGroup.add(createBox(0.06, 0.03, 0.10, mats.windowFrame, 3.02, Y_FLOOR + 0.95, 0.28));
+
+    // 6. Veranda Post, Beam & Relax Bench
+    // Timber Corner Post (X=4.20, Z=0.0)
+    const postH = wallHeight(0.0) - Y_FLOOR;
+    saunaGroup.add(createBox(0.12, postH, 0.12, mats.timberExterior, 4.18, Y_FLOOR, -0.02));
+    // Top Roof Support Beam spanning 3.0 to 4.25
+    saunaGroup.add(createBox(1.28, 0.16, 0.10, mats.timberExterior, 3.00, Y_FLOOR + postH - 0.16, -0.02));
+    // Terrace Relax Bench (at rear of porch)
+    saunaGroup.add(createBox(1.15, 0.045, 0.50, mats.timberInterior, 3.05, Y_FLOOR + 0.45, 1.95));
+    saunaGroup.add(createBox(0.06, 0.45, 0.45, mats.timberExterior, 4.12, Y_FLOOR, 1.98));
+
+    // Terrace Lantern (cozy evening light)
+    const lanternGeo = new THREE.CylinderGeometry(0.08, 0.10, 0.18, 8);
+    const lanternMesh = new THREE.Mesh(lanternGeo, mats.windowFrame);
+    lanternMesh.position.set(3.65, Y_FLOOR + 1.95, 1.2);
+    saunaGroup.add(lanternMesh);
+
+    const bulbMesh = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 12), mats.lanternGlow);
+    bulbMesh.position.set(3.65, Y_FLOOR + 1.95, 1.2);
+    saunaGroup.add(bulbMesh);
+
+    const lanternLight = new THREE.PointLight(0xff9d3b, 1.8, 4.5, 1.8);
+    lanternLight.position.set(3.65, Y_FLOOR + 1.88, 1.2);
+    lanternLight.castShadow = true;
+    saunaGroup.add(lanternLight);
+
+    // 7. Interior Sauna Lavar & Inredning
+    // Upper Lave (Övre lave: depth 0.60m along rear wall)
+    saunaGroup.add(createBox(2.90, 0.05, 0.60, mats.timberInterior, 0.05, Y_FLOOR + 0.90, 1.85));
+    // Lower Lave (Undre lave: depth 0.60m)
+    saunaGroup.add(createBox(2.90, 0.05, 0.60, mats.timberInterior, 0.05, Y_FLOOR + 0.46, 1.25));
+    // Bench vertical front skirt
+    saunaGroup.add(createBox(2.90, 0.39, 0.02, mats.timberInterior, 0.05, Y_FLOOR + 0.51, 1.85));
+    // Step stool / bench
+    saunaGroup.add(createBox(1.10, 0.04, 0.38, mats.timberInterior, 0.08, Y_FLOOR + 0.22, 0.85));
+    // Backrest along back wall
+    saunaGroup.add(createBox(2.86, 0.26, 0.025, mats.timberInterior, 0.07, Y_FLOOR + 1.22, 2.43));
+
+    // LED Backlight strip under upper bench
+    const saunaLedLight = new THREE.PointLight(0xffa142, 2.8, 5.0, 1.6);
+    saunaLedLight.position.set(1.5, Y_FLOOR + 0.85, 2.0);
+    saunaGroup.add(saunaLedLight);
+
+    // Warm ceiling spotlight inside sauna
+    const saunaCeilingLight = new THREE.PointLight(0xffb76b, 2.2, 5.5, 1.4);
+    saunaCeilingLight.position.set(1.5, Y_FLOOR + 2.1, 1.2);
+    saunaGroup.add(saunaCeilingLight);
+
+    // 8. Sauna Heater (Harvia Cilindro style pillar heater)
+    const heaterGeo = new THREE.CylinderGeometry(0.18, 0.18, 1.05, 20);
+    const heaterMesh = new THREE.Mesh(heaterGeo, mats.heaterMesh);
+    heaterMesh.position.set(0.45, Y_FLOOR + 0.53, 0.48);
+    heaterMesh.castShadow = true;
+    saunaGroup.add(heaterMesh);
+
+    // Sauna Stones inside mesh
+    const stonesGeo = new THREE.CylinderGeometry(0.165, 0.165, 1.02, 16);
+    const stonesMesh = new THREE.Mesh(stonesGeo, mats.saunaStones);
+    stonesMesh.position.set(0.45, Y_FLOOR + 0.54, 0.48);
+    saunaGroup.add(stonesMesh);
+
+    // Heat shield against timber wall
+    saunaGroup.add(createBox(0.015, 1.25, 0.65, mats.heaterMesh, 0.015, Y_FLOOR + 0.05, 0.18));
+
+    // Heater cozy ember glow
+    const heaterGlow = new THREE.PointLight(0xff5500, 1.5, 2.2, 2.0);
+    heaterGlow.position.set(0.45, Y_FLOOR + 0.8, 0.48);
+    saunaGroup.add(heaterGlow);
+
+    // 9. Roof (Pulpettak / Mono-pitch roof) in roofGroup
+    // Sloping roof plate
+    const rSteps = 16;
+    const rZ0 = -0.45;
+    const rZ1 = 2.75;
+    const rDZ = (rZ1 - rZ0) / rSteps;
+    const roofThick = 0.08;
+
+    // Roof beams (Takåsar 70x140)
+    [0.0, 1.25, 2.50].forEach(bz => {
+      const bh = wallHeight(bz);
+      roofGroup.add(createBox(4.45, 0.14, 0.09, mats.timberInterior, -0.10, bh, bz - 0.045));
+    });
+
+    for (let s = 0; s < rSteps; s++) {
+      const za = rZ0 + s * rDZ;
+      const zb = rZ0 + (s + 1) * rDZ;
+      const hMid = wallHeight((za + zb)/2) + 0.14;
+      roofGroup.add(createBox(4.55, roofThick, rDZ, mats.roofFelt, -0.15, hMid, za));
+    }
+    // Front and Rear Fascia boards (Vindskivor)
+    const fHFront = wallHeight(-0.45) + 0.12;
+    roofGroup.add(createBox(4.57, 0.18, 0.035, mats.roofFelt, -0.16, fHFront, -0.48));
+    const fHRear = wallHeight(2.75) + 0.12;
+    roofGroup.add(createBox(4.57, 0.18, 0.035, mats.roofFelt, -0.16, fHRear, 2.74));
+
+    // Left and Right Bargeboards
+    for (let s = 0; s < rSteps; s++) {
+      const za = rZ0 + s * rDZ;
+      const zb = rZ0 + (s + 1) * rDZ;
+      const hMid = wallHeight((za + zb)/2) + 0.14;
+      roofGroup.add(createBox(0.03, roofThick + 0.08, rDZ, mats.roofFelt, -0.17, hMid - 0.04, za));
+      roofGroup.add(createBox(0.03, roofThick + 0.08, rDZ, mats.roofFelt, 4.39, hMid - 0.04, za));
+    }
+
+    // 10. Riverbank Ground & Stepping Stones (forsstranden atmosfär)
+    const groundGeo = new THREE.PlaneGeometry(24, 24);
+    groundGeo.rotateX(-Math.PI / 2);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x1b2820,
+      roughness: 0.95,
+      metalness: 0.05
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.receiveShadow = true;
+    ground.position.set(2.0, 0, 1.25);
+    scene.add(ground);
+
+    // Natural Stepping Stones (skiffer / granit till bastuentrén)
+    const stoneCoords = [
+      [3.6, -0.4], [3.4, -0.9], [3.7, -1.4], [3.3, -1.9], [3.5, -2.4], [3.2, -2.9]
+    ];
+    stoneCoords.forEach(([sx, sz]) => {
+      const sg = new THREE.CylinderGeometry(0.24, 0.28, 0.04, 8);
+      const sm = new THREE.Mesh(sg, mats.concretePlinth);
+      sm.position.set(sx, 0.02, sz);
+      sm.rotation.y = Math.random() * Math.PI;
+      sm.receiveShadow = true;
+      scene.add(sm);
+    });
+
+    // River Water surface indication
+    const waterGeo = new THREE.PlaneGeometry(30, 10);
+    waterGeo.rotateX(-Math.PI / 2);
+    const waterMat = new THREE.MeshPhysicalMaterial({
+      color: 0x1a3344,
+      roughness: 0.15,
+      transmission: 0.6,
+      opacity: 0.85,
+      transparent: true,
+      reflectivity: 0.95
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.position.set(2.0, -0.15, -6.0);
+    scene.add(water);
+
+    // 11. 3D Dimension Helpers (dimsGroup)
+    function createDimLine(p1, p2, text) {
+      const g = new THREE.Group();
+      const points = [new THREE.Vector3(...p1), new THREE.Vector3(...p2)];
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 });
+      g.add(new THREE.Line(lineGeo, lineMat));
+      // End markers
+      const dotGeo = new THREE.SphereGeometry(0.03, 8, 8);
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+      const d1 = new THREE.Mesh(dotGeo, dotMat); d1.position.set(...p1); g.add(d1);
+      const d2 = new THREE.Mesh(dotGeo, dotMat); d2.position.set(...p2); g.add(d2);
+      return g;
+    }
+    // Width dimension
+    dimsGroup.add(createDimLine([-0.05, 0.05, -0.65], [4.35, 0.05, -0.65], "4.40 m"));
+    // Depth dimension
+    dimsGroup.add(createDimLine([-0.35, 0.05, 0.0], [-0.35, 0.05, 2.50], "2.70 m"));
+    // Height dimension
+    dimsGroup.add(createDimLine([4.5, 0.0, 0.0], [4.5, wallHeight(0.0) + 0.16, 0.0], "2.68 m"));
+
+    // --- Lighting Setups ---
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444455, 0.6);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+    dirLight.position.set(8, 12, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 30;
+    dirLight.shadow.camera.left = -6;
+    dirLight.shadow.camera.right = 8;
+    dirLight.shadow.camera.top = 6;
+    dirLight.shadow.camera.bottom = -6;
+    scene.add(dirLight);
+
+    let isNight = true;
+    function setLightingMode(night) {
+      isNight = night;
+      document.getElementById('btn-night').classList.toggle('active', night);
+      document.getElementById('btn-day').classList.toggle('active', !night);
+
+      if (night) {
+        // Cozier evening twilight
+        scene.background = new THREE.Color(0x0a0f16);
+        scene.fog.color.setHex(0x0a0f16);
+        scene.fog.density = 0.03;
+        hemiLight.intensity = 0.25;
+        hemiLight.color.setHex(0x3a506b);
+        hemiLight.groundColor.setHex(0x1a202c);
+        dirLight.intensity = 0.35;
+        dirLight.color.setHex(0x6b8cae);
+        dirLight.position.set(-6, 8, -6);
+        // Sauna interior and porch glow high
+        saunaLedLight.intensity = 3.2;
+        saunaCeilingLight.intensity = 2.6;
+        lanternLight.intensity = 2.2;
+        heaterGlow.intensity = 1.8;
+      } else {
+        // Crisp Nordic daylight
+        scene.background = new THREE.Color(0xb0cbe5);
+        scene.fog.color.setHex(0xb0cbe5);
+        scene.fog.density = 0.012;
+        hemiLight.intensity = 0.85;
+        hemiLight.color.setHex(0xffffff);
+        hemiLight.groundColor.setHex(0x556644);
+        dirLight.intensity = 1.4;
+        dirLight.color.setHex(0xfffaed);
+        dirLight.position.set(8, 12, 10);
+        saunaLedLight.intensity = 1.0;
+        saunaCeilingLight.intensity = 0.8;
+        lanternLight.intensity = 0.5;
+        heaterGlow.intensity = 0.4;
+      }
+    }
+    setLightingMode(true); // Default to cozy evening mood as in photo
+
+    // --- Interactive Roof Toggle ---
+    let roofVisible = true;
+    function toggleRoof() {
+      roofVisible = !roofVisible;
+      roofGroup.visible = roofVisible;
+      document.getElementById('btn-roof').classList.toggle('active', !roofVisible);
+      document.getElementById('roof-text').innerText = roofVisible ? "Dölj tak (Insyn)" : "Visa tak";
+    }
+
+    // --- Interactive Dimensions Toggle ---
+    let dimsVisible = false;
+    function toggleDimensions() {
+      dimsVisible = !dimsVisible;
+      dimsGroup.visible = dimsVisible;
+      document.getElementById('btn-dims').classList.toggle('active', dimsVisible);
+    }
+
+    // --- Camera Presets ---
+    function setCameraView(preset) {
+      controls.autoRotate = false;
+      const duration = 1000;
+      let targetPos, targetLook;
+      if (preset === 'front') {
+        targetPos = new THREE.Vector3(2.1, 1.8, 6.2);
+        targetLook = new THREE.Vector3(2.1, 1.3, 1.25);
+      } else if (preset === 'porch') {
+        targetPos = new THREE.Vector3(4.8, 1.6, 2.5);
+        targetLook = new THREE.Vector3(3.6, 1.3, 1.2);
+      } else if (preset === 'interior') {
+        targetPos = new THREE.Vector3(1.5, 1.6, -0.6);
+        targetLook = new THREE.Vector3(1.5, 1.2, 1.8);
+      } else if (preset === 'plan') {
+        targetPos = new THREE.Vector3(2.1, 8.5, 1.25);
+        targetLook = new THREE.Vector3(2.1, 0, 1.25);
+        if (roofVisible) toggleRoof(); // Hide roof for plan view automatically
+      }
+      
+      // Smooth lerp
+      const startPos = camera.position.clone();
+      const startTarget = controls.target.clone();
+      const startTime = performance.now();
+
+      function animateCamera() {
+        const elapsed = performance.now() - startTime;
+        const t = Math.min(elapsed / 600, 1.0);
+        const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        camera.position.lerpVectors(startPos, targetPos, ease);
+        controls.target.lerpVectors(startTarget, targetLook, ease);
+        controls.update();
+        if (t < 1.0) requestAnimationFrame(animateCamera);
+      }
+      animateCamera();
+    }
+
+    // Resize Handler
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Render Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
