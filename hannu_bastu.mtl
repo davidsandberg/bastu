@@ -1,0 +1,65 @@
+# Materials for Hannu Sauna
+
+newmtl TimberExterior
+Kd 0.180 0.180 0.190
+Ks 0.080 0.080 0.080
+d 1.00
+Ns 15.0
+illum 2
+
+newmtl WoodInterior
+Kd 0.910 0.760 0.540
+Ks 0.150 0.120 0.090
+d 1.00
+Ns 20.0
+illum 2
+
+newmtl WoodDecking
+Kd 0.580 0.530 0.440
+Ks 0.100 0.100 0.100
+d 1.00
+Ns 10.0
+illum 2
+
+newmtl RoofFelt
+Kd 0.120 0.120 0.130
+Ks 0.050 0.050 0.050
+d 1.00
+Ns 5.0
+illum 2
+
+newmtl WindowFrame
+Kd 0.100 0.100 0.100
+Ks 0.250 0.250 0.250
+d 1.00
+Ns 40.0
+illum 2
+
+newmtl Glass
+Kd 0.750 0.850 0.900
+Ks 0.900 0.950 1.000
+d 0.35
+Ns 90.0
+illum 2
+
+newmtl HeaterMetal
+Kd 0.250 0.250 0.270
+Ks 0.500 0.500 0.550
+d 1.00
+Ns 60.0
+illum 2
+
+newmtl SaunaStones
+Kd 0.280 0.260 0.240
+Ks 0.050 0.050 0.050
+d 1.00
+Ns 5.0
+illum 2
+
+newmtl Concrete
+Kd 0.650 0.650 0.650
+Ks 0.050 0.050 0.050
+d 1.00
+Ns 5.0
+illum 2
+

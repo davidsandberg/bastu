@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# CAD / OS
+*.bak
+*.dwl
+*.dwl2
+Thumbs.db
+.DS_Store
