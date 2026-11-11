@@ -478,7 +478,7 @@ def export_gltf(mb, gltf_path):
         json.dump(gltf_doc, f, indent=2)
 
 if __name__ == "__main__":
-    out_dir = r"C:\Users\david\git\bastu"
+    out_dir = os.path.dirname(os.path.abspath(__file__))
     obj_file = os.path.join(out_dir, "hannu_bastu.obj")
     mtl_file = os.path.join(out_dir, "hannu_bastu.mtl")
     gltf_file = os.path.join(out_dir, "hannu_bastu.gltf")

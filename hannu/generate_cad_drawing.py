@@ -156,7 +156,7 @@ def build_cadcraft_commands():
     return cmds
 
 def run():
-    out_dir = r"C:\Users\david\git\bastu"
+    out_dir = os.path.dirname(os.path.abspath(__file__))
     dxf_path = os.path.join(out_dir, "hannu_planritning.dxf")
     png_path = os.path.join(out_dir, "hannu_planritning.png")
 
